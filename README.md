@@ -23,3 +23,5 @@ The *index.js* file can contain two objects:
 	- *path*: The directory of the plugin.
 
 The script specified in *clientJS* can have a function ```loaded``` which will be executed on ```window.onload```
+
+**More functionality coming soon**
