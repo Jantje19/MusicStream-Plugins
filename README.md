@@ -7,4 +7,4 @@
 - Profit
 
 ## Create a plugin
-Take a look at the [example](/Example/)
+Take a look at the [example](/tree/master/Example/)
