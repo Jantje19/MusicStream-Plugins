@@ -119,12 +119,25 @@ body #display button {
 	transform: translate(-50%, -50%);
 }
 
+body #display #songs {
+	height: 80%;
+	overflow-y: auto;
+}
+
 body > div > div > div {
 	display: flex;
 	padding: 0 10px;
 	flex-wrap: wrap;
 	flex-direction: row;
 	justify-content: center;
+}
+
+body > div > div > div label {
+	width: 50%;
+	overflow: hidden;
+	text-align: left;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 body > div > div > div > button {

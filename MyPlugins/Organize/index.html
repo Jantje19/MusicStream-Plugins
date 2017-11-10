@@ -72,8 +72,15 @@
 								evt.stopPropagation();
 
 								object[evt.currentTarget.title].forEach((object, key) => {
+									let title = object.fileName;
 									const tags = object.tags;
-									html += `<div id="${object.fileName}"><input id="${tags.title}" type="checkbox"><label for="${tags.title}">${tags.artist} - ${tags.title}</label></div>`;
+
+									if (tags) {
+										if ('title' in tags && 'artist' in tags)
+											title = tags.artist + ' - ' + tags.title;
+									}
+
+									html += `<div id="${object.fileName}"><input id="${title}" type="checkbox"><label for="${title}">${title}</label></div>`;
 								});
 
 								html += '</div><button onclick="playSelected()">Play</button>';
@@ -98,8 +105,10 @@
 								fetch('getArtistData/' + key).then(response => {
 									response.json().then(data => {
 										if (data.success) {
-											if (data.data.image[2])
-												buttonElement.getElementsByClassName('artwork')[0].style.backgroundImage = `url(${data.data.image[2]['#text']})`;
+											if (data.data.image[2]) {
+												if (data.data.image[2]['#text'].length > 0)
+													buttonElement.getElementsByClassName('artwork')[0].style.backgroundImage = `url(${data.data.image[2]['#text']})`;
+											}
 										}
 									});
 								});
@@ -125,14 +134,18 @@
 								array[name] = [object];
 						}
 
-						if ('title' in tags) {
-							if ('album' in tags && 'artist' in tags) {
-								addToObject(albums, tags.album, object);
-								addToObject(artists, tags.artist, object);
-							} else if ('album' in tags) {
-								addToObject(albums, tags.album, object);
-							} else if ('artist' in tags) {
-								addToObject(artists, tags.artist, object);
+						// console.log(tags.artist, tags.title, object.fileName);
+
+						if (Object.keys(tags).length > 0) {
+							if ('title' in tags) {
+								if ('album' in tags && 'artist' in tags) {
+									addToObject(albums, tags.album, object);
+									addToObject(artists, tags.artist, object);
+								} else if ('album' in tags) {
+									addToObject(albums, tags.album, object);
+								} else if ('artist' in tags) {
+									addToObject(artists, tags.artist, object);
+								} else uncategorized.push(object);
 							} else uncategorized.push(object);
 						} else uncategorized.push(object);
 					});
@@ -141,6 +154,7 @@
 					const artistElement = document.getElementById('artists');
 
 					albumElement.innerHTML = '';
+					displayBoxes({Uncategorized: uncategorized}, albumElement, key => {return uncategorized.length});
 					displayBoxes(albums, albumElement, key => {
 						return albums[key][0].tags.artist;
 					}, 'album');
@@ -153,8 +167,8 @@
 					}, 'artist');
 				} else alert(data.error);
 			}).catch(console.error);
-		}).catch(console.error);
-	</script>
+}).catch(console.error);
+</script>
 
 </head>
 <body>
