@@ -21,7 +21,7 @@ body #controls {
 	background-color: #16a085;
 }
 
-body #controls button {
+body #controls > button {
 	width: 60px;
 	height: 100%;
 	border: none;
@@ -30,7 +30,7 @@ body #controls button {
 	background-color: transparent;
 }
 
-body #controls button:before {
+body #controls > button:before {
 	top: 0;
 	left: 0;
 	opacity: 0;
@@ -45,7 +45,7 @@ body #controls button:before {
 	transform: translate(25%, 25%);
 }
 
-body #controls button:hover:before {
+body #controls > button:hover:before {
 	opacity: .4;
 }
 
@@ -58,6 +58,41 @@ body #controls span {
 
 body #controls span:last-child {
 	float: right;
-	margin-top: 25px;
-	margin-right: 10px;
+	margin-top: 28px;
+	margin-right: 50px;
+}
+
+body #controls #overflow-button {
+	right: -5px;
+	bottom: 0px;
+	position: absolute;
+}
+
+body #controls #overflow-menu {
+	right: 10px;
+	bottom: 70px;
+	display: none;
+	position: absolute;
+	background-color: white;
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+body #controls #overflow-menu button {
+	width: 100%;
+	border: none;
+	padding: 10px;
+	display: block;
+	cursor: pointer;
+	background-color: transparent;
+	border-bottom: 1px lightgray solid;
+}
+
+body #controls #overflow-menu button[inactive] {
+	opacity: 0.5;
+	cursor: default;
+	pointer-events: none;
+}
+
+body #controls #overflow-menu button:last-child {
+	border: 0;
 }

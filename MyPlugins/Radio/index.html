@@ -6,6 +6,9 @@
 
 	<link href="styles.css" rel="stylesheet" type="text/css" media="screen"/>
 	<script type="text/javascript">
+		let activeStation = '';
+		let alreadyActivated = false;
+
 		const audio = new Audio();
 		const promiseArray = [];
 
@@ -27,6 +30,14 @@
 					timeElement.innerText = audio.currentTime.toMMSS();
 				});
 
+				const overflowMenuElem = document.getElementById('overflow-menu');
+				document.getElementById('overflow-button').addEventListener('click', evt => {
+					if (overflowMenuElem.style.display == 'block')
+						overflowMenuElem.style.display = 'none';
+					else
+						overflowMenuElem.style.display = 'block';
+				});
+
 				document.getElementById('toggle').parentNode.addEventListener('click', toggleAudio);
 				resolve();
 			}
@@ -39,18 +50,29 @@
 		}));
 
 		Promise.all(promiseArray).then(data => {
+			const responseData = data[1];
 			const elem = document.getElementById('stations');
 
-			data[1].forEach((object, key) => {
-				elem.innerHTML += `<button onclick="playRadio('${object.url}', this)">${object.name}</button>`;
-			});
+			if (responseData.success)
+				updateInterface(responseData.data, elem);
+			else
+				elem.innerHTML = `<p>${responseData.error}</p>`;
 		}).catch(err => {
 			console.error(err);
 			alert('Something went wrong');
 		});
 
 		function playRadio(url, elem) {
+			if (!alreadyActivated) {
+				Array.from(document.getElementById('overflow-menu').getElementsByTagName('button')).forEach((object, key) => {
+					object.removeAttribute('inactive');
+				});
+
+				alreadyActivated = true;
+			}
+
 			audio.src = url;
+			activeStation = elem.innerText;
 			toggleAudio(elem.innerText, true);
 		}
 
@@ -74,6 +96,75 @@
 				document.getElementById('toggle').src = '/Assets/ic_play_arrow_white.svg';
 			}
 		}
+
+		function updateInterface(data, elem) {
+			elem = elem || document.getElementById('stations');
+
+			elem.innerHTML = '';
+			data.forEach((object, key) => {
+				elem.innerHTML += `<button onclick="playRadio('${object.url}', this)">${object.name}</button>`;
+			});
+		}
+
+
+
+
+		function removeStation() {
+			const name = activeStation;
+
+			if (name.length > 0) {
+				fetch(`removeStation?name=${name}`).then(response => {
+					response.json().then(json => {
+						if (json.success)
+							updateInterface(json.data);
+						else alert(json.error);
+					});
+				}).catch(err => {
+					console.error('An error occurred', err);
+				});
+			} else alert('No station selected');
+		}
+
+		function renameStation() {
+			const oldName = activeStation;
+			const newName = prompt('Name:').toString().trim();
+
+			if (newName.length > 0 && oldName.length > 0) {
+				fetch(`renameStation?oldName=${oldName}&newName=${newName}`).then(response => {
+					response.json().then(json => {
+						if (json.success)
+							updateInterface(json.data);
+						else alert(json.error);
+					});
+				}).catch(err => {
+					console.error('An error occurred', err);
+				});
+			} else alert('Cannot have empty values');
+		}
+
+		function addStation() {
+			const name = prompt('Name:').toString().trim();
+			const url = prompt('Stream URL:').toString().trim();
+
+			if (name.length > 0 && url.length > 0) {
+				fetch(`addStation?name=${name}&url=${url}`).then(response => {
+					response.json().then(json => {
+						if (json.success)
+							updateInterface(json.data);
+						else alert(json.error);
+					});
+				}).catch(err => {
+					console.error('An error occurred', err);
+				});
+			} else alert('Cannot have empty values');
+		}
+
+		function changeVolume(val) {
+			const newVal = audio.volume + val / 10;
+
+			if (newVal < 1 && newVal > 0)
+				audio.volume = newVal;
+		}
 	</script>
 
 </head>
@@ -84,6 +175,15 @@
 	<div id="controls">
 		<button><img id="toggle" src="/Assets/ic_play_arrow_white.svg"></button>
 		<span id="title" translate="yes"></span>
+
+		<button id="overflow-button" title="Overflow menu"><img src="/Assets/ic_more_vert_white.svg"></button>
+		<div id="overflow-menu">
+			<button onclick="removeStation()" inactive>Remove station</button>
+			<button onclick="renameStation()" inactive>Rename station</button>
+			<button onclick="addStation()">Add new station</button>
+			<button onclick="changeVolume(1)">Increase volume</button>
+			<button onclick="changeVolume(-1)">Decrease volume</button>
+		</div>
 		<span id="timer">00:00</span>
 	</div>
 
