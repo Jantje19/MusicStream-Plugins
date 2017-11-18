@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>MusicStream - Radio</title>
+
+	<link href="styles.css" rel="stylesheet" type="text/css" media="screen"/>
+	<script type="text/javascript">
+		const audio = new Audio();
+		const promiseArray = [];
+
+		promiseArray.push(new Promise((resolve, reject) => {
+			window.onload = evt => {
+				Number.prototype.toMMSS = function () {
+					const sec_num = Math.round(this);
+					let hours   = Math.floor(sec_num / 3600);
+					let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+					let seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+					if (minutes < 10) {minutes = "0"+minutes;}
+					if (seconds < 10) {seconds = "0"+seconds;}
+					return minutes + ':' + seconds;
+				}
+
+				const timeElement = document.getElementById('timer');
+				audio.addEventListener('timeupdate', evt => {
+					timeElement.innerText = audio.currentTime.toMMSS();
+				});
+
+				document.getElementById('toggle').parentNode.addEventListener('click', toggleAudio);
+				resolve();
+			}
+		}));
+
+		promiseArray.push(new Promise((resolve, reject) => {
+			fetch('/Radio/getStations/').then(response => {
+				response.json().then(resolve).catch(reject);
+			}).catch(reject);
+		}));
+
+		Promise.all(promiseArray).then(data => {
+			const elem = document.getElementById('stations');
+
+			data[1].forEach((object, key) => {
+				elem.innerHTML += `<button onclick="playRadio('${object.url}', this)">${object.name}</button>`;
+			});
+		}).catch(err => {
+			console.error(err);
+			alert('Something went wrong');
+		});
+
+		function playRadio(url, elem) {
+			audio.src = url;
+			toggleAudio(elem.innerText, true);
+		}
+
+		function toggleAudio(title, play) {
+			const titleElement = document.getElementById('title');
+
+			title = (typeof title == 'string') ? title : titleElement.innerText;
+			titleElement.innerText = 'Loading...';
+
+			if (play || audio.paused) {
+				audio.play().then(() => {
+					titleElement.innerText = title;
+					document.getElementById('toggle').src = '/Assets/ic_pause_white.svg';
+				}).catch(err => {
+					console.error(err);
+					alert('Couln\'t play audio');
+				});
+			} else {
+				audio.pause();
+				titleElement.innerText = title;
+				document.getElementById('toggle').src = '/Assets/ic_play_arrow_white.svg';
+			}
+		}
+	</script>
+
+</head>
+<body>
+
+	<div id="stations"></div>
+
+	<div id="controls">
+		<button><img id="toggle" src="/Assets/ic_play_arrow_white.svg"></button>
+		<span id="title" translate="yes"></span>
+		<span id="timer">00:00</span>
+	</div>
+
+</body>
+</html>
