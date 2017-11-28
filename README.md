@@ -8,7 +8,7 @@
 - Profit
 
 ## Create a plugin
-Take a look at the [example](https://github.com/Jantje19/MusicStream-Plugins/tree/master/Example). Or at the already created plugins: [Cast-Plugin](https://github.com/Jantje19/MusicStream-Cast-Plugin).
+Take a look at the [example](https://github.com/Jantje19/MusicStream-Plugins/tree/master/Example).
 
 #### API
 The *index.js* file looks on startup in the Plugins directory. It loops though every directory and searches for an *index.js* file. So **there should be an *index.js* file in the root of your plugin directory.**
