@@ -4,9 +4,18 @@ module.exports = {
 		script: 'script.js'
 	},
 
-	server: (app, utils, path) => {
-		app.get('/URL/*', (request, response) => {
-			response.send('A response');
-		});
+	server: (server, imports, data) => {
+		const request = (request, response) => {
+			response.send('Yay');
+		}
+
+		const serverRequests = [
+		{
+			name: '',
+			func: request
+		}
+		];
+
+		server.addGetRequest(serverRequests);
 	}
 }
