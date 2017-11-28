@@ -5,17 +5,19 @@ module.exports = {
 	},
 
 	server: (server, imports, data) => {
-		const request = (request, response) => {
-			response.send('Yay');
+		const getRequest = (request, response) => {
+			response.send('A response');
 		}
 
-		const serverRequests = [
+		server.addGetRequest([
 		{
-			name: '',
-			func: request
+			name: 'URL',
+			func: getRequest
 		}
-		];
-
-		server.addGetRequest(serverRequests);
+		]);
+	},
+	menu: {
+		url: '/',
+		name: 'Example'
 	}
 }
