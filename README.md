@@ -24,7 +24,7 @@ The *index.js* file can contain three objects:
 		- *func*: A function that handles the request. It get passed the *response* and *request* attributes.
 	- *imports*: Includes objects that are already required by the *MusicStream* service. They contain the following: *fs*, *os*, *id3*, *ytdl*, *utils*, *https*, *url*, *fileHandler* (*MusicStream* native), *querystring*.
 	- *data*: Includes:
-		- *version* The *MusicStream* version.
+		- *version*: The *MusicStream* version.
 		- *serverURL*: The URL on which *MusicStream* is currently hosted. Most of the times this is *172.0.0.1:8000*.
 		- *path*: The absolute path of the plugin.
 - *menu*: Creates an entry in the overflow menu on the main page. It requires the following arguments:
