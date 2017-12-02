@@ -1,4 +1,11 @@
+const {exec} = require('child_process');
+
 module.exports = {
+	clientJS: {
+		script: 'clientJS.js',
+		filePath: '/Audio/index.html'
+	},
+
 	server: (server, imports, data) => {
 		let socket;
 		const WebSocket = require('ws');
@@ -9,10 +16,26 @@ module.exports = {
 		});
 
 		server.addGetRequest({
+			name: 'openOnServer',
+			func: (request, response) => {
+				exec(`exo-open --launch WebBrowser "http://${data.serverURL}/Sync/?receiver"`, (err, stdout, stderr) => {
+					if (err) {
+						console.err(err);
+						response.send({success: false, error: JSON.stringify(err)});
+					} else {
+						// response.send({success: true});
+						response.redirect(`http://${data.serverURL}/Sync/`);
+					}
+				});
+			}
+		},
+		{
 			name: '',
 			func: (request, response) => {
 				const url = imports.querystring.unescape(request.url);
 				const queryString = imports.URLModule.parse(url).query;
+
+				console.log(queryString, url.endsWith('/'));
 
 				if (queryString) {
 					const args = imports.querystring.parse(queryString);
@@ -21,7 +44,9 @@ module.exports = {
 						imports.utils.sendFile(imports.fs, __dirname + '/receiver.html', response);
 					else
 						imports.utils.sendFile(imports.fs, __dirname + '/sender.html', response);
-				} else imports.utils.sendFile(imports.fs, __dirname + '/sender.html', response);
+				} else if (url.endsWith('/')) {
+					imports.utils.sendFile(imports.fs, __dirname + '/sender.html', response);
+				} else imports.utils.sendFile(imports.fs, data.path + request.url.replace('Sync', ''), response);
 			}
 		});
 
