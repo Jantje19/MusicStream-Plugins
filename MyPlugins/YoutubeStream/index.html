@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>MusicStream - YoutubeStream</title>
+
+	<link href="styles.css" rel="stylesheet" type="text/css" media="screen"/>
+	<link href="/seekbarStyle.css" rel="stylesheet" type="text/css" media="screen"/>
+
+	<script type="text/javascript">
+		const audio = new Audio();
+		const cssRules = [];
+
+		function updateCSS(newValBefore, newValAfter) {
+			const addRule = function(sheet, selector, styles) {
+				if (sheet.insertRule) return sheet.insertRule(selector + " {" + styles + "}", sheet.cssRules.length);
+				if (sheet.addRule) return sheet.addRule(selector, styles);
+			};
+
+			if (cssRules.length > 0) {
+				cssRules.forEach((object, key) => {
+					let rule;
+					const styleSheet = document.styleSheets[0];
+					const type = (key == 0) ? 'before' : 'after';
+
+					if ('rules' in styleSheet) rule = styleSheet.rules[object];
+					else if ('cssRules' in styleSheet) rule = styleSheet.cssRules[object];
+					else return;
+
+					rule.style.content = `'${arguments[key]}' !important`;
+					rule.style.cssText = `content: "${arguments[key]}" !important;`;
+					rule.cssText = `#seekBar[type=range]::${type} { content: '${arguments[key]}' !important; }`;
+					rule.selectorText = `#seekBar[type=range]::${type} { content: '${arguments[key]}' !important; }`;
+				});
+			} else {
+				cssRules.push(addRule(document.styleSheets[0], "#seekBar[type=range]::before", `content: '${newValBefore}' !important`));
+				cssRules.push(addRule(document.styleSheets[0], "#seekBar[type=range]::after", `content: '${newValAfter}' !important`));
+			}
+		}
+
+		function deleteQueue() {
+
+		}
+
+		function playSong(songId) {
+			audio.src = 'streamVideo/' + songId;
+			audio.play();
+		}
+
+		document.addEventListener('DOMContentLoaded', evt => {
+			const queueElem = document.getElementById('queue');
+			const vidSearchElem = document.getElementById('vidSearchBox');
+			const plstSearchElem = document.getElementById('plstSearchBox');
+			const searchCountElem = document.getElementById('searchSongCount');
+			const playlistCountElem = document.getElementById('playlistSongCount');
+
+			document.getElementById('vidSearchBtn').addEventListener('click', evt => {
+				const searchQuery = vidSearchElem.value.trim();
+
+				if (searchQuery.length > 0) {
+					fetch('searchVideo/' + searchQuery).then(response => {
+						response.json().then(json => {
+							if (json.success) {
+								const elem = document.getElementById('searchResults');
+								const btnClick = evt => {
+									const elem = evt.currentTarget.cloneNode(true);
+
+									elem.onclick = evt => {
+										playSong(evt.currentTarget.id);
+									}
+
+									queueElem.appendChild(elem);
+								}
+
+								searchCountElem.innerText = 'Amount: ' + json.data.items.length;
+								json.data.items.filter(val => {
+									return val.id.kind == 'youtube#video';
+								}).forEach((object, key) => {
+									const buttonElem = document.createElement('button');
+
+									buttonElem.onclick = btnClick;
+									buttonElem.id = object.id.videoId;
+									buttonElem.innerHTML += `<img src="${object.snippet.thumbnails.medium.url}"><p>${object.snippet.title}</p><a target="_blank" href="https://youtube.com/channel/${object.snippet.channelId}">${object.snippet.channelTitle}</a>`;
+									elem.appendChild(buttonElem);
+								});
+							}
+						});
+					}).catch(err => {
+						console.error('An error occurred', err);
+					});
+				}
+			});
+
+			document.getElementById('playlistBtn').addEventListener('click', evt => {
+				let playlistId = '';
+				const searchQuery = plstSearchElem.value.trim();
+
+				if (searchQuery.length > 0) {
+					if (searchQuery.length == 34)
+						playlistId = searchQuery;
+					else {
+						const match = searchQuery.match(/https?:\/\/(www.)?youtube.com\/playlist\?list=(.{34})/);
+
+						if (match)
+							playlistId = match[2];
+						else
+							alert('Nope');
+					}
+
+					fetch('getPlaylist/' + playlistId).then(response => {
+						response.json().then(json => {
+							if (json.success) {
+								const elem = document.getElementById('plstVids');
+								const loadMoreBtn = document.createElement('button');
+								const btnClick = evt => {
+									queueElem.innerHTML += `<p>${evt.currentTarget.id}</p>`;
+								}
+								const addItems = arr => {
+									arr.forEach((object, key) => {
+										const buttonElem = document.createElement('button');
+
+										buttonElem.onclick = btnClick;
+										buttonElem.id = object.snippet.resourceId.videoId;
+										buttonElem.innerHTML += `<img src="${object.snippet.thumbnails.medium.url}"><p>${object.snippet.title}</p>`;
+
+										if (!loadMoreBtn.parentNode)
+											elem.appendChild(buttonElem);
+										else
+											elem.insertBefore(buttonElem, loadMoreBtn);
+									});
+								}
+
+								loadMoreBtn.innerText = 'Load More';
+								loadMoreBtn.style.width = '100%';
+								loadMoreBtn.onclick = evt => {
+									let nextPageToken = json.data.nextPageToken;
+
+									if (evt.currentTarget.hasAttribute('nextPageToken'))
+										nextPageToken = evt.currentTarget.getAttribute('nextPageToken');
+
+									fetch('getPlaylist/' + nextPageToken + '/' + playlistId).then(response => {
+										response.json().then(json => {
+											if (json.success) {
+												addItems(json.data.items);
+												loadMoreBtn.setAttribute('nextPageToken', json.data.nextPageToken);
+											}
+										});
+									}).catch(err => {
+										console.error('An error occurred', err);
+									});
+								}
+
+								addItems(json.data.items);
+								playlistCountElem.innerText = 'Amount: ' + json.data.items.length;
+								elem.appendChild(loadMoreBtn);
+							}
+						});
+					}).catch(err => {
+						console.error('An error occurred', err);
+					});
+				}
+			});
+		});
+	</script>
+
+	<script type="text/javascript">
+		/*let video;
+
+		document.addEventListener('DOMContentLoaded', evt => {
+			video = document.getElementsByTagName('video')[0];
+
+			document.getElementById('playBtn').addEventListener('click', evt => {
+				let url = document.getElementById('url').value;
+
+				if (url.length > 0) {
+					if (url.length != 11)
+						url = url.match(/(.+)v\=((\w+|[0-9]+|\-|\_)+)$/i)[2]
+
+					video.src = 'streamVideo/' + url;
+					video.play();
+				} else alert('Not a valid URL');
+			});
+		});*/
+	</script>
+
+</head>
+<body>
+
+	<main>
+		<div id="main">
+			<div>
+				<h3>Search</h3>
+				<hr style="border-bottom-color: lightgray;">
+				<input type="text" id="vidSearchBox"><button class="inpBtn" id="vidSearchBtn">Search</button>
+				<span id="searchSongCount">Amount: 0</span>
+				<hr>
+				<div id="searchResults"></div>
+			</div>
+
+			<div>
+				<h3>Playlists</h3>
+				<hr style="border-bottom-color: lightgray;">
+				<input type="text" id="plstSearchBox"><button class="inpBtn" id="playlistBtn">Get</button>
+				<span id="playlistSongCount">Amount: 0</span>
+				<hr>
+				<div id="plstVids"></div>
+			</div>
+
+			<div>
+				<h3>Queue</h3>
+				<button class="styledBtn" title="Empty queue" style="float: right; width: unset" onclick="deleteQueue()"><img src="/Assets/ic_clear_all_black.svg"></button>
+				<hr style="border-bottom-color: lightgray;">
+				<span id="songCount">Amount: 0</span>
+				<hr>
+				<div id="queue"></div>
+			</div>
+		</div>
+
+		<div id="controls">
+			<input type="range" value="0" min="0" max="100" id="seekBar"/>
+
+			<div id="mainControls">
+				<div>
+					<button class="styledBtn" title="Play previous song"><img src="/Assets/ic_skip_previous_white.svg"></button>
+					<button class="styledBtn" title="Play/pause song"><img src="/Assets/ic_play_arrow_white.svg"></button>
+					<button class="styledBtn" title="Play next song"><img src="/Assets/ic_skip_next_white.svg"></button>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<!-- <video>Not supported</video>
+
+	<label for="url">Paste URL</label>
+	<input type="url" id="url" value="https://www.youtube.com/watch?v=6md5RSnVUuo">
+	<button id="playBtn">Play</button> -->
+
+	<!-- <label for="search">Search for video</label>
+	<input type="text" id="search">
+	<button>Search</button> -->
+
+</body>
+</html>
