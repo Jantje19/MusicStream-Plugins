@@ -3,7 +3,6 @@
 ## Install a plugin
 - Download the repository
 - Extract the .zip file in the /MusicStream/Plugins/ directory
-- Run ```npm install``` in a CLI
 - ???
 - Profit
 
