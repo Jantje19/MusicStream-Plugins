@@ -16,6 +16,14 @@ module.exports = {
 		}
 		]);
 	},
+
+	hijackRequests: {
+		preventDefault: false,
+		func: (request, response, next) => {
+			console.log(request.url);
+		}
+	},
+
 	menu: {
 		url: '/',
 		name: 'Example'
