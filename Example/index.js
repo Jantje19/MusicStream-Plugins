@@ -19,7 +19,7 @@ module.exports = {
 
 	hijackRequests: {
 		preventDefault: false,
-		func: (request, response, next) => {
+		func: (request, response, next, imports, data) => {
 			console.log(request.url);
 		}
 	},

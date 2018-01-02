@@ -35,6 +35,11 @@ The *index.js* file can contain the following three objects:
 		- *request*: The *express* request parameter.
 		- *response*: The *express* response parameter.
 		- *next*: A function that executes the next request handler. Only available when *preventDefault* is set to *true*.
+	- *imports*: Includes objects that are already required by the *MusicStream* service. They contain the following: *fs*, *os*, *id3*, *ytdl*, *utils*, *https*, *url*, *fileHandler* (*MusicStream* native), *querystring*.
+	- *data*: Includes:
+		- *version*: The *MusicStream* version.
+		- *serverURL*: The URL on which *MusicStream* is currently hosted. Most of the times this is *172.0.0.1:8000*.
+		- *path*: The absolute path of the plugin.
 
 The script specified in *clientJS* can have a function ```loaded``` which will be executed on ```window.onload```
 
