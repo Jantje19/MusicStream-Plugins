@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>MusicStream - SignIn - Sign Out</title>
+
+	<script type="text/javascript">
+		let looped = 0;
+
+		function checkCookie() {
+			if (looped < 100) {
+				if (document.cookie.indexOf('token') < 0) {
+					document.write('Redirecting...')
+					window.location = '/';
+				} else {
+					document.cookie = 'token=;path=/;max-age=-10;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+					checkCookie();
+				}
+
+				looped++;
+			} else document.write('Unable to remove cookie...');
+		}
+
+		checkCookie();
+	</script>
+
+</head>
+<body>
+
+	<p>Checking if cookie still exists...</p>
+
+</body>
+</html>

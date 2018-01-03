@@ -1,3 +1,3 @@
-# I have created some plugins
+# *MusicSteam* plugins by the creator
 
-You can download and use these in *MusicStream*
+I've created plug-ins for features that I wanted but didn't find necessary to integrate into *MusicStream*.
