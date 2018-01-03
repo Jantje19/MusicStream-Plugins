@@ -2,7 +2,7 @@
 
 ## Install a plugin
 - Download the repository
-- Extract the .zip file in the /MusicStream/Plugins/ directory
+- Extract the .zip file in the /MusicStream/Plugins/ directory (If the directory doesn't exist, create it)
 - ???
 - Profit
 
