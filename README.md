@@ -16,7 +16,7 @@ On startup the main *MusicStream* service looks in the Plugins directory. It loo
 The *index.js* file can contain the following three objects:
 - *clientJS*: Is used for adding JavaScript files to already created, *MusicStream* provided pages. This object requires:
 	- *filePath*: The path of the file you want to manipulate (for example: '/Audio/index.html').
-	- *script*: The script file you want to insert. This file has to be within the plugin directory.
+	- *script*: The path of the script you want to insert. This file has to be within the plugin directory.
 - *server*: This function is used to create a request handler for the server. This object is a function that receives the following arguments:
 	- *server*: A custom class with the argument functions *addGetRequest* and *addPostRequest*. They require objects, in an array or individually passed, with the following arguments:
 		- *name*: The name of the request. Can be empty for \*.
