@@ -58,7 +58,7 @@ promiseArray.push(new Promise((resolve, reject) => {
 		<div style="background-color: #16a085; padding: 5% 10%; background-color: #16a085; box-shadow: 0 0 10px rgba(0, 0, 0, 0.8); text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);">
 		<h2 style="color: white; margin-bottom: 10px">Log In</h2>
 		<form action="/SignIn/" method="post">
-		<input style="color: white; padding: 3px 8px; background: none; border-radius: 20px; border: white 2px solid;" name="password" type="password"/>
+		<input style="color: white; padding: 3px 8px; background: none; border-radius: 20px; border: white 2px solid;" name="password" type="password" autofocus/>
 		<button style="color: white; cursor: pointer; padding: 3px 8px; background: none; border-radius: 20px; border: white 2px solid;">Log In</button> </form>
 		</div>
 		`;

@@ -4,6 +4,7 @@ const tokens = [];
 const maxMinDiff = 100;
 const tokenLength = 11;
 const debugging = false;
+const checkTokenTimeout = 1800000 // 39 Min;
 const crypto = require('crypto');
 const passHash = {
 	nSalt: 'd17fa9b231e5eae7',
@@ -11,7 +12,7 @@ const passHash = {
 }
 
 function genRandomString(length) {
-	return crypto.randomBytes(Math.ceil(length/2))
+	return crypto.randomBytes(Math.ceil(length / 2))
 	.toString('hex')
 	.slice(0, length);
 }
@@ -31,9 +32,9 @@ function saltHashPassword(userpassword) {
 	const salt = genRandomString(16);
 	const passwordData = sha512(userpassword, salt);
 
-	console.log('UserPassword = ' + userpassword);
+	/*console.log('UserPassword = ' + userpassword);
 	console.log('Passwordhash = ' + passwordData.passwordHash);
-	console.log('nSalt = ' + passwordData.salt);
+	console.log('nSalt = ' + passwordData.salt);*/
 }
 
 function sendError(val, response) {
@@ -117,17 +118,18 @@ function checkPass(pass) {
 }
 
 function setToken(request, response) {
+	const dateTime = new Date().getTime();
 	const token = genRandomString(tokenLength);
 
 	tokens.push({
 		token: token,
-		date: new Date().getTime(),
+		date: dateTime,
 		ip: request.connection.remoteAddress,
 		userAgent: request.headers['user-agent']
 	});
 
 	response.header({
-		'Set-Cookie': `token=${token};path=/`
+		'Set-Cookie': `token=${token};path=/;expires=` + new Date(dateTime + (maxMinDiff * 60000)).toGMTString()
 	});
 
 	return token;
@@ -138,6 +140,24 @@ function removeCookie(response) {
 		'Set-Cookie': 'token=;path=/;max-age=-10;expires=Thu, 01 Jan 1970 00:00:00 GMT'
 	});
 }
+
+function updateToken(token, newDate) {
+	for (let i = 0; i < tokens.length; i++) {
+		if (tokens[i].token == token) {
+			tokens[i].date = newDate.getTime();
+			return;
+		}
+	}
+}
+
+setInterval(() => {
+	const dateTime = new Date().getTime();
+
+	for (let i = tokens.length - 1; i >= 0; i--) {
+		if (dateTime - token.date > maxMinDiff * 60000 + 1000)
+			tokens.splice(i, 1);
+	}
+}, checkTokenTimeout);
 
 module.exports = {
 	clientJS: {
@@ -242,8 +262,19 @@ module.exports = {
 					}
 				}
 
-				if (validizeTokenRequest(request, response, imports, data))
+				if (validizeTokenRequest(request, response, imports, data)) {
+					const newDate = new Date();
+					const token = getTokenFromCookie(request.headers.cookie, imports.querystring);
+					const tokenExpirationDate = new Date(newDate.getTime() + (maxMinDiff * 60000));
+
+					updateToken(token, newDate);
+					response.header({
+						'X-Token-Expiration': tokenExpirationDate.getTime(),
+						'Set-Cookie': `token=${token};path=/;expires=` + tokenExpirationDate.toGMTString()
+					});
+
 					next();
+				}
 			}
 		}
 	},
