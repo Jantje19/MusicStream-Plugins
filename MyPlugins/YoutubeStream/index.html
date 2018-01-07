@@ -9,7 +9,36 @@
 
 	<script type="text/javascript">
 		const audio = new Audio();
+		const youtubeData = [];
 		const cssRules = [];
+
+		function updateMediaSession(className) {
+			const dataVal = youtubeData[parseInt(className.split('-')[1])];
+			let title, artist, artwork = [];
+
+			if (dataVal) {
+				title = dataVal.snippet.title;
+				artist = dataVal.snippet.channelTitle;
+
+				for (key in dataVal.snippet.thumbnails) {
+					const thumbnailData = dataVal.snippet.thumbnails[key];
+
+					artwork.push({
+						type: 'image/jpg',
+						src: thumbnailData.url,
+						sizes: `${thumbnailData.width}x${thumbnailData.height}`
+					});
+				}
+
+				if ('mediaSession' in navigator) {
+					navigator.mediaSession.metadata = new MediaMetadata({
+						title: title,
+						artist: artist,
+						artwork: artwork
+					});
+				}
+			}
+		}
 
 		function updateCSS(newValBefore, newValAfter) {
 			const addRule = function(sheet, selector, styles) {
@@ -58,18 +87,26 @@
 				const searchQuery = vidSearchElem.value.trim();
 
 				if (searchQuery.length > 0) {
+					const elem = document.getElementById('searchResults');
+
+					elem.innerHTML = '';
+					youtubeData.length = 0;
 					fetch('searchVideo/' + searchQuery).then(response => {
 						response.json().then(json => {
 							if (json.success) {
-								const elem = document.getElementById('searchResults');
 								const btnClick = evt => {
-									const elem = evt.currentTarget.cloneNode(true);
+									if (evt.target.tagName.toLowerCase() != 'a') {
+										const elem = evt.currentTarget.cloneNode(true);
 
-									elem.onclick = evt => {
-										playSong(evt.currentTarget.id);
+										elem.onclick = evt => {
+											playSong(evt.currentTarget.id);
+											updateMediaSession(Array.from(evt.currentTarget.classList).find(val => {
+												return val.indexOf('arryIndex-') >= 0;
+											}));
+										}
+
+										queueElem.appendChild(elem);
 									}
-
-									queueElem.appendChild(elem);
 								}
 
 								searchCountElem.innerText = 'Amount: ' + json.data.items.length;
@@ -78,9 +115,11 @@
 								}).forEach((object, key) => {
 									const buttonElem = document.createElement('button');
 
+									youtubeData.push(object);
 									buttonElem.onclick = btnClick;
 									buttonElem.id = object.id.videoId;
-									buttonElem.innerHTML += `<img src="${object.snippet.thumbnails.medium.url}"><p>${object.snippet.title}</p><a target="_blank" href="https://youtube.com/channel/${object.snippet.channelId}">${object.snippet.channelTitle}</a>`;
+									buttonElem.classList.add('arryIndex-' + key);
+									buttonElem.innerHTML += `<img src="${object.snippet.thumbnails.medium.url}"><p>${object.snippet.title}</p><a target="_blank" href="https://youtube.com/channel/${object.snippet.channelId}">${object.snippet.channelTitle}</a><br><a href="/downloadYoutube/${object.id.videoId}">Download</a>`;
 									elem.appendChild(buttonElem);
 								});
 							}
@@ -107,6 +146,8 @@
 							alert('Nope');
 					}
 
+					elem.innerHTML = '';
+					youtubeData.length = 0;
 					fetch('getPlaylist/' + playlistId).then(response => {
 						response.json().then(json => {
 							if (json.success) {
@@ -119,7 +160,9 @@
 									arr.forEach((object, key) => {
 										const buttonElem = document.createElement('button');
 
+										youtubeData.push(object);
 										buttonElem.onclick = btnClick;
+										buttonElem.classList.add('arryIndex-' + key);
 										buttonElem.id = object.snippet.resourceId.videoId;
 										buttonElem.innerHTML += `<img src="${object.snippet.thumbnails.medium.url}"><p>${object.snippet.title}</p>`;
 
@@ -138,6 +181,8 @@
 									if (evt.currentTarget.hasAttribute('nextPageToken'))
 										nextPageToken = evt.currentTarget.getAttribute('nextPageToken');
 
+									elem.innerHTML = '';
+									youtubeData.length = 0;
 									fetch('getPlaylist/' + nextPageToken + '/' + playlistId).then(response => {
 										response.json().then(json => {
 											if (json.success) {
