@@ -14,7 +14,7 @@ On startup the main *MusicStream* service looks in the Plugins directory. It loo
 
 ##### Index.js
 The *index.js* file can contain the following three objects:
-- *clientJS*: Is used for adding JavaScript files to already created, *MusicStream* provided pages. This object requires:
+- *clientJS*: Is used for adding JavaScript files to already created, *MusicStream* provided pages. It accepts an object or an array of object. This object requires:
 	- *filePath*: The path of the file you want to manipulate (for example: '/Audio/index.html').
 	- *script*: The path of the script you want to insert. This file has to be within the plugin directory.
 - *server*: This function is used to create a request handler for the server. This object is a function that receives the following arguments:
@@ -26,7 +26,7 @@ The *index.js* file can contain the following three objects:
 		- *version*: The *MusicStream* version.
 		- *serverURL*: The URL on which *MusicStream* is currently hosted. Most of the times this is *172.0.0.1:8000*.
 		- *path*: The absolute path of the plugin.
-- *menu*: Creates an entry in the overflow menu on the main page. It requires the following arguments:
+- *menu*: Creates an entry in the overflow menu on the main page. This only works if you have the *server* object set. It requires the following arguments:
 	- *url*: The url you want the button to go to on click. If empty the folder name is used.
 	- *name*: The name of the button. If empty the folder name is used.
 - *hijackRequests*: Gives you the ability to edit requests, prevent requests from coming through and analyze requests.
