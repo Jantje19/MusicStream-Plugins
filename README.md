@@ -41,6 +41,6 @@ The *index.js* file can contain the following three objects:
 		- *serverURL*: The URL on which *MusicStream* is currently hosted. Most of the times this is *172.0.0.1:8000*.
 		- *path*: The absolute path of the plugin.
 
-The script specified in *clientJS* can have a function ```loaded``` which will be executed on ```window.onload```
+(The script specified in *clientJS* can have a function ```loaded``` which will be executed on ```window.onload``` **DEPRECATED USE:** ```document.addEventListener('DOMContentLoaded', evtHandler)```)
 
 **The server POST and GET functions automaticly get the plugin name before it in the URL.** For example, the URL for a plugin, named *MyPlugin*, with a GET request specified as *home*, is *http://localhost:8000/MyPlugin/home*.
