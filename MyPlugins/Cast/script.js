@@ -1,4 +1,4 @@
-function loaded() {
+document.addEventListener('DOMContentLoaded', evt => {
 	const button = document.createElement('button');
 
 	button.id = 'castBtn';
@@ -22,4 +22,4 @@ function loaded() {
 	});
 
 	document.getElementById('right').appendChild(button);
-}
+});
