@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>MusicStream - Add User</title>
+
+	<script type="text/javascript">
+		document.addEventListener('DOMContentLoaded', evt => {
+			const messageElem = document.getElementById('message');
+
+			document.getElementsByTagName('form')[0].addEventListener('submit', evt => {
+				evt.preventDefault();
+
+				const formElem = evt.target;
+				const inputElem = formElem.getElementsByTagName('input');
+
+				const userElem = inputElem[0];
+				const passElem = inputElem[1];
+				const verPassElem = inputElem[2];
+
+				if (userElem && passElem && verPassElem) {
+					if (userElem.value.trim() == '')
+						messageElem.innerText = 'Username value is empty';
+					else if (passElem.value.trim() == '')
+						messageElem.innerText = 'Password value is empty';
+					else if (verPassElem.value.trim() == '')
+						messageElem.innerText = 'Verify password value is empty';
+					else if (passElem.value !== verPassElem.value)
+						messageElem.innerText = 'Passwords are not the same';
+					else
+						formElem.submit();
+				} else formElem.submit();
+
+				return false;
+			});
+		});
+	</script>
+
+	<style type="text/css">
+	body {
+		top: 0;
+		left: 0;
+		margin: 0;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		font-family: 'Arial', sans-serif;
+	}
+
+	main {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: cover !important;
+		background: url(https://i.imgur.com/Sip8TfX.jpg);
+	}
+
+	main > div {
+		color: white;
+		display: flex;
+		padding: 5% 10%;
+		position: relative;
+		background-color: #16a085;
+		padding-bottom: calc(5% + 30px);
+		box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+		text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+	}
+
+	main > div p {
+		margin-top: 0;
+		padding-top: 0;
+		font-weight: bold;
+	}
+
+	main > div label {
+		display: block;
+		padding-bottom: 5px;
+	}
+
+	main > div input {
+		color: white;
+		text-align: center;
+		border-radius: 20px;
+		border: white 2px solid;
+		background-color: rgba(255, 255, 255, 0.2);
+	}
+
+	main > div input:last-child {
+		bottom: 18px;
+		cursor: pointer;
+		position: absolute;
+	}
+</style>
+
+</head>
+<body>
+
+	<main>
+		<div>
+			<form action="/SignIn/addUser" method="post">
+				<p id="message"></p>
+				<label for="username">Username:</label>
+				<input id="username" type="text" name="username" />
+				<br>
+				<br>
+				<label for="newPass">Password:</label>
+				<input id="newPass" type="password" name="pass" />
+				<br>
+				<br>
+				<label for="newPass-verify">Password (verification):</label>
+				<input id="newPass-verify" type="password" name="pass-verify" />
+				<br>
+				<input type="submit" value="Add!">
+			</form>
+		</div>
+	</main>
+
+</body>
+</html>

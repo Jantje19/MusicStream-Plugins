@@ -1,0 +1,17 @@
+{
+  "name": "musicstream-plugin-signin",
+  "version": "0.1.0",
+  "description": "Sign in interface for MusicStream",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "MusicStream-Plugin"
+  ],
+  "author": "jantje19",
+  "license": "ISC",
+  "dependencies": {
+    "express-basic-auth": "^1.1.3"
+  }
+}

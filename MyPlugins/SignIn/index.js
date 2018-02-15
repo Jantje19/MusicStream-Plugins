@@ -1,286 +1,273 @@
 'use strict';
 
-const tokens = [];
-const maxMinDiff = 100;
-const tokenLength = 11;
-const debugging = false;
-const checkTokenTimeout = 1800000 // 39 Min;
+const basicAuth = require('express-basic-auth');
 const crypto = require('crypto');
-const passHash = {
-	nSalt: 'd17fa9b231e5eae7',
-	passwordHash: '8ecb5af1ff2c34062a2a70b09f81ab8cb2f588ced59264a5d9a1f86a5e53f3a18918af858d6c26e60f13eaa5df4073f3b01965883e0d83ce8e84e3a317294889'
-}
+const fs = require('fs');
 
-function genRandomString(length) {
-	return crypto.randomBytes(Math.ceil(length / 2))
-	.toString('hex')
-	.slice(0, length);
-}
+const splitVal = '[$[--]$]';
+const usersPath = __dirname + '/users.json';
+const unauthorizedPage = fs.readFileSync(__dirname + '/unauth.html').toString() || '<style>font-family: \'Arial\', sans-serif;</style><h1>401 Not Authorized.</h1>';
+const defaultUsers = {
+	'admin': `6f6107121849e89b0fb121d197fd04c33e83cfa7d417aced9a810cfccbdda4311e721a15df2e0da7686ced713029db640ab03812a19f955ed99cd725b99359c6${splitVal}56823e4c6bf8000e` // pass: admin
+};
 
-function sha512(password, salt) {
-	const hash = crypto.createHmac('sha512', salt);
-	hash.update(password);
+function mainLogic(users) {
+	function randomString(length) {
+		length = length || 11;
 
-	const value = hash.digest('hex');
-	return {
-		salt: salt,
-		passwordHash: value
-	}
-}
+		return crypto.randomBytes(Math.ceil(length / 2))
+		.toString('hex')
+		.slice(0,length);
+	};
 
-function saltHashPassword(userpassword) {
-	const salt = genRandomString(16);
-	const passwordData = sha512(userpassword, salt);
+	function sha512(password, salt){
+		const hash = crypto.createHmac('sha512', salt);
+		hash.update(password);
+		const value = hash.digest('hex');
 
-	/*console.log('UserPassword = ' + userpassword);
-	console.log('Passwordhash = ' + passwordData.passwordHash);
-	console.log('nSalt = ' + passwordData.salt);*/
-}
+		return {
+			salt: salt,
+			passwordHash: value
+		};
+	};
 
-function sendError(val, response) {
-	if (debugging)
-		response.send({success: false, error: val, info: val});
-	else {
-		removeCookie(response);
-		response.redirect('/SignIn/?mess=' + val);
-	}
-}
+	function saltHashPassword(userpassword) {
+		const salt = randomString();
+		const passwordData = sha512(userpassword, salt);
 
-function getTokenFromCookie(cookieString, querystring) {
-	if (cookieString.length > 0) {
-		const parsedCookie = querystring.parse(cookieString);
+		return passwordData;
+	};
 
-		if (parsedCookie) {
-			if ('token' in parsedCookie) {
-				return parsedCookie['token'];
-			} else return;
-		} else return;
-	} else return;
-}
+	function updateUsersFile(users) {
+		if (fs.existsSync(usersPath)) {
+			fs.readFile(usersPath, users, (err, data) => {
+				if (err)
+					console.err(err);
+				else {
+					let parsed = false;
 
-function dateInRange(date) {
-	const now = new Date();
-	const diff = now.getTime() - date;
+					try {
+						if (data.length > 0) {
+							data = JSON.parse(data.toString('utf-8'));
 
-	if (diff / 60000 < maxMinDiff)
-		return true;
+							for (key in users)
+								data[key] = users[key];
 
-	return false;
-}
+						} else data = users;
 
-function removeToken(token) {
-	for (let i = 0; i < tokens.length; i++) {
-		if (tokens[i].token == token) {
-			tokens.splice(i, 1);
-			return;
-		}
-	}
-}
-
-function validizeToken(token, ip, userAgent) {
-	for (let i = 0; i < tokens.length; i++) {
-		const obj = tokens[i];
-
-		if (debugging)
-			console.log(obj.token == token, obj.ip == ip, obj.userAgent == userAgent, dateInRange(obj.date));
-
-		if (obj.token == token && obj.userAgent == userAgent && dateInRange(obj.date)) // && obj.ip == ip
-			return true;
-	}
-
-	removeToken(token);
-	return false;
-}
-
-function validizeTokenRequest(request, response, imports, data) {
-	if (request.headers) {
-		if (request.headers.cookie) {
-			if (request.headers.cookie.length > 0) {
-				const token = getTokenFromCookie(request.headers.cookie, imports.querystring);
-
-				if (token) {
-					if (token.length == tokenLength) {
-						if (validizeToken(token, request.connection.remoteAddress, request.headers['user-agent']))
-							return true;
-						else
-							sendError('Invalid token', response);
-					} else sendError('Token of invalid length', response);
-				} else sendError('Token not found', response);
-			} else sendError('Cookie of invalid length', response);
-		} else sendError('No token header found', response);
-	} else sendError('No headers found', response);
-
-	return false;
-}
-
-function checkPass(pass) {
-	return sha512(pass, passHash.nSalt).passwordHash === passHash.passwordHash;
-}
-
-function setToken(request, response) {
-	const dateTime = new Date().getTime();
-	const token = genRandomString(tokenLength);
-
-	tokens.push({
-		token: token,
-		date: dateTime,
-		ip: request.connection.remoteAddress,
-		userAgent: request.headers['user-agent']
-	});
-
-	response.header({
-		'Set-Cookie': `token=${token};path=/;expires=` + new Date(dateTime + (maxMinDiff * 60000)).toGMTString()
-	});
-
-	return token;
-}
-
-function removeCookie(response) {
-	response.header({
-		'Set-Cookie': 'token=;path=/;max-age=-10;expires=Thu, 01 Jan 1970 00:00:00 GMT'
-	});
-}
-
-function updateToken(token, newDate) {
-	for (let i = 0; i < tokens.length; i++) {
-		if (tokens[i].token == token) {
-			tokens[i].date = newDate.getTime();
-			return;
-		}
-	}
-}
-
-setInterval(() => {
-	const dateTime = new Date().getTime();
-
-	for (let i = tokens.length - 1; i >= 0; i--) {
-		if (dateTime - token.date > maxMinDiff * 60000 + 1000)
-			tokens.splice(i, 1);
-	}
-}, checkTokenTimeout);
-
-module.exports = {
-	clientJS: {
-		filePath: '/Audio/index.html',
-		script: '/clientJS.js'
-	},
-
-	server: (server, imports, data) => {
-		server.addGetRequest({
-			name: 'checkToken',
-			func: (request, response) => {
-				if (validizeTokenRequest(request, response, imports, data))
-					response.send({success: true, valid: true});
-			}
-		},
-		{
-			name: 'signOut',
-			func: (request, response) => {
-				removeCookie(response);
-				imports.utils.sendFile(imports.fs, data.path + '/logOut.html', response);
-			}
-		},
-		{
-			name: '',
-			func: (request, response) => {
-				const path = request.path.replace('/SignIn', '');
-
-				if (path.endsWith('/'))
-					imports.utils.sendFile(imports.fs, data.path + '/index.html', response);
-				else
-					imports.utils.sendFile(imports.fs, data.path + path, response);
-			}
-		});
-
-		server.addPostRequest({
-			name: '',
-			func: (request, response) => {
-				let body = '';
-
-				request.on('data', data => {
-					body += data;
-
-					if (body.length > 1e6) {
-						sendError('The amount of data is too much', response);
-						request.connection.destroy();
-					}
-				});
-
-				request.on('end', () => {
-					if (body.length > 0) {
-						const args = imports.querystring.parse(imports.querystring.unescape(body));
-
-						if (args) {
-							if ('password' in args) {
-								const validPass = checkPass(args.password);
-
-								if (validPass) {
-									setToken(request, response);
-									response.redirect('/');
-								} else sendError('Wrong password', response);
-							} else sendError('No password argument found', response);
-						} else sendError('No arguments found', response);
-					} else sendError('No arguments found', response);
-				});
-			}
-		});
-	},
-
-	hijackRequests: {
-		preventDefault: true,
-		func: (request, response, next, imports, data) => {
-			const url = imports.querystring.unescape(request.url);
-			const urlArgs = imports.URLModule.parse(url);
-
-			if (urlArgs.pathname) {
-				if (urlArgs.pathname.length > 0) {
-					if (urlArgs.pathname.replace(/\//g, '').startsWith('SignIn')) {
-						next();
-						return;
-					} else if (urlArgs.pathname == '/' || urlArgs.pathname.endsWith('.js') || urlArgs.pathname.endsWith('.png') || urlArgs.pathname.endsWith('.svg') || urlArgs.pathname.endsWith('.html') || urlArgs.pathname.endsWith('.css')) {
-						next();
-						return;
+						parsed = true;
+					} catch (err) {
+						console.err('Unable to update file', err);
 					}
 
+					if (parsed) {
+						fs.writeFile(usersPath, JSON.stringify(data), err => {
+							if (err)
+								console.err(err);
+						});
+					}
 				}
+			});
+		} else {
+			fs.writeFile(usersPath, JSON.stringify(users), err => {
+				if (err)
+					console.err(err);
+			});
+		}
+	}
 
-			}
 
-			if (request.headers) {
-				if (debugging) {
-					if (request.headers.host) {
-						if (request.headers.host.length > 0) {
-							const splitArr = data.serverURL.split(':');
-							const IP = splitArr[0];
-							const PORT = splitArr[1];
+	module.exports = {
+		clientJS: [{
+			script: 'clientJS.js',
+			filePath: '/Audio/index.html'
+		}, {
+			script: 'settingsClientJS.js',
+			filePath: '/settings.html'
+		}],
 
-							if (request.headers.host == 'localhost:' + PORT || request.headers.host == data.serverURL) {
-								next();
-								return;
-							}
+		server: (server, imports, data) => {
+			server.addGetRequest({
+				name: 'changePass',
+				func: (request, response) => {
+					imports.utils.sendFile(imports.fs, __dirname + '/changePassword.html', response);
+				}
+			}, {
+				name: 'addUser',
+				func: (request, response) => {
+					imports.utils.sendFile(imports.fs, __dirname + '/addUser.html', response);
+				}
+			}, {
+				name: '*',
+				func: (request, response) => {
+					imports.utils.sendFile(imports.fs, __dirname + '/index.html', response);
+				}
+			});
+
+			server.addPostRequest({
+				name: 'changePass',
+				func: (request, response) => {
+					let body = '';
+
+					request.on('data', data => {
+						body += data;
+
+						if (body.length > 1e6) {
+							response.send({success: false, error: 'Too much data'});
+							request.connection.destroy();
 						}
-					}
-				}
-
-				if (validizeTokenRequest(request, response, imports, data)) {
-					const newDate = new Date();
-					const token = getTokenFromCookie(request.headers.cookie, imports.querystring);
-					const tokenExpirationDate = new Date(newDate.getTime() + (maxMinDiff * 60000));
-
-					updateToken(token, newDate);
-					response.header({
-						'X-Token-Expiration': tokenExpirationDate.getTime(),
-						'Set-Cookie': `token=${token};path=/;expires=` + tokenExpirationDate.toGMTString()
 					});
 
-					next();
-				}
-			}
-		}
-	},
+					request.on('end', () => {
+						if (body.trim() == '')
+							response.redirect('/SignIn/changePass');
+						else {
+							body = imports.querystring.unescape(body.trim());
+							const args = imports.querystring.parse(body);
 
-	menu: {
-		url: '/signOut',
-		name: 'Sign Out'
+							if (Object.keys(args).length > 0) {
+								if (!('oldPass' in args) || !('newPass' in args) || !('newPass-verify' in args))
+									response.send({success: false, error: 'Didn\'t find all the required arguments'})
+								else {
+									if (args.newPass === args['newPass-verify']) {
+										if (request.auth.user in users) {
+											const splitPassArr = users[request.auth.user].split(splitVal);
+
+											if (splitPassArr.length == 2) {
+												if (args.oldPass == request.auth.password) {
+													if (sha512(args.oldPass, splitPassArr[1]).passwordHash == splitPassArr[0]) {
+														const hashObj = saltHashPassword(args.newPass);
+
+														users[request.auth.user] = hashObj.passwordHash + splitVal + hashObj.salt;
+														updateUsersFile(users);
+
+														response.status(303).header({
+															'Location': '/'
+														}).end('Successfully changed password for ' + request.auth.user);
+														return;
+													}
+												}
+											}
+
+											response.send({success: false, error: 'Incorrect password'});
+										} else response.send({success: false, error: 'User not found'})
+									} else response.send({success: false, error: 'Passwords don\'t match'})
+								}
+							} else response.send({success: false, error: 'Something went wrong with parsing the body of the request'})
+						}
+					});
+				}
+			}, {
+				name: 'addUser',
+				func: (request, response) => {
+					let body = '';
+
+					request.on('data', data => {
+						body += data;
+
+						if (body.length > 1e6) {
+							response.send({success: false, error: 'Too much data'});
+							request.connection.destroy();
+						}
+					});
+
+					request.on('end', () => {
+						if (body.trim() == '')
+							response.redirect('/SignIn/addUser');
+						else {
+							body = imports.querystring.unescape(body.trim());
+							const args = imports.querystring.parse(body);
+
+							if (Object.keys(args).length > 0) {
+								if (!('username' in args) || !('pass' in args)  || !('pass-verify' in args))
+									response.send({success: false, error: 'Didn\'t find all the required arguments'})
+								else {
+									if (args.username.trim() != '') {
+										if (args.pass === args['pass-verify']) {
+											if (!(args.Username in users)) {
+												const passHash = saltHashPassword(args.pass);
+												let newUserObj = {};
+
+												if (Object.is(defaultUsers, users)) {
+													newUserObj[args.username] = passHash.passwordHash + splitVal + passHash.salt;
+													users = newUserObj;
+												} else {
+													users[args.username] = passHash.passwordHash + splitVal + passHash.salt;
+													newUserObj = users;
+												}
+
+												updateUsersFile(newUserObj);
+												response.status(303).header({
+													'Location': '/'
+												}).end(`Successfully added user '${args.username}'`);
+											} else response.send({success: false, error: `Username already exists. Did you want to change the password?: ${request.protocol}://${request.get('host')}/SignIn/changePass?un=${args.username}`})
+										} else response.send({success: false, error: 'Passwords don\'t match'})
+									} else response.send({success: false, error: 'Username empty'});
+								}
+							} else response.send({success: false, error: 'Something went wrong with parsing the body of the request'})
+						}
+					});
+				}
+			});
+		},
+
+		hijackRequests: {
+			preventDefault: true,
+			func: basicAuth({
+				users: users,
+				challenge: true,
+				realm: randomString(),
+				authorizer: (username, password) => {
+					if (username in users) {
+						const userVal = users[username];
+						const splitPassArr = userVal.split(splitVal);
+
+						if (splitPassArr.length == 2)
+							return (sha512(password, splitPassArr[1]).passwordHash == splitPassArr[0]);
+					}
+
+					return false;
+				},
+				unauthorizedResponse: req => {
+					return unauthorizedPage;
+				}
+			})
+		}
 	}
 }
+
+
+// Check if user file exists and run the plugin with it.
+(function() {
+	const goingWithDefault = errMesg => {
+		errMesg = errMesg || '';
+
+		console.wrn('SignIn - Unable to read user file, so going with default...', errMesg, `Defaults: ${Object.keys(defaultUsers).join(',')}`);
+	}
+
+	if (fs.existsSync(usersPath)) {
+		let data = fs.readFileSync(usersPath);
+
+		if (!data) {
+			goingWithDefault();
+			mainLogic(defaultUsers);
+		} else {
+			try {
+				data = JSON.parse(data.toString());
+
+				if (Object.keys(data).length > 0)
+					mainLogic(data);
+				else {
+					goingWithDefault();
+					mainLogic(defaultUsers);
+				}
+			} catch (err) {
+				goingWithDefault();
+				mainLogic(defaultUsers);
+			}
+		}
+	} else {
+		goingWithDefault();
+		mainLogic(defaultUsers);
+	}
+})();
