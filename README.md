@@ -6,7 +6,7 @@
 - ???
 - Profit
 
-## Create a plugin
+## Create your own plugin
 Take a look at the [example](https://github.com/Jantje19/MusicStream-Plugins/tree/master/Example).
 
 #### API
