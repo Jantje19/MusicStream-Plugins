@@ -1,16 +1,23 @@
 # Music Stream Plugin
+This repository had the documentation for creating your own *MusicStream* plugin. It also stores plugins I've created.
+*MusicStream* version 0.1.5 and above have support for plugins.
+[If you don't know what *MusicStream* is, take a look here.](https://github.com/Jantje19/MusicStream/)
 
 ## Install a plugin
-- Download the repository
-- Extract the .zip file in the /MusicStream/Plugins/ directory (If the directory doesn't exist, create it)
-- ???
-- Profit
+**Before installing any plugin you need to take a look at the source code and determine if it is safe to execute!**
+
+#### Install a plugin from this repository
+1. Download this repository
+2. Extract the .zip file
+3. Look for the directory containing the desired plugin
+4. Move/copy the whole folder in the *MusicStream/Plugins/* directory (If the directory doesn't exist, you have to create it)
+5. (re)Start *MusicStream*
 
 ## Create your own plugin
 Take a look at the [example](https://github.com/Jantje19/MusicStream-Plugins/tree/master/Example).
 
 #### API
-On startup the main *MusicStream* service looks in the Plugins directory. It loops though every directory and searches for an *index.js* file. So **there should be an *index.js* file in the root of your plugin directory.** This also means that **the name of your plugin is the name of the folder in the *Plugins* folder.**
+On startup the main *MusicStream* service looks in the *Plugins* directory. It loops though every directory and searches for an *index.js* file. So **there should be an *index.js* file in the root of your plugin directory.** This also means that **the name of your plugin is the name of the folder in the *Plugins* folder.**
 
 ##### Index.js
 The *index.js* file can contain the following three objects:
@@ -41,6 +48,10 @@ The *index.js* file can contain the following three objects:
 			- *serverURL*: The URL on which *MusicStream* is currently hosted. Most of the times this is *172.0.0.1:8000*.
 			- *path*: The absolute path of the plugin.
 
-(The script specified in *clientJS* can have a function ```loaded``` which will be executed on ```window.onload``` **DEPRECATED, USE:** ```document.addEventListener('DOMContentLoaded', evtHandler)```)
+##### The plugin can also be a function (module.exports = *function*)
+A *MusicStream* plugin can export a function since v0.2.3.
+The function gets two arguments: *data* & *imports*. These are same as the arguments passed to the *server* function listed above.
 
-**The server POST and GET functions automaticly get the plugin name before it in the URL.** For example, the URL for a plugin, named *MyPlugin*, with a GET request specified as *home*, is *http://localhost:8000/MyPlugin/home*.
+(The script specified in *clientJS* can have a function ```loaded``` which will be executed on ```window.onload``` **DEPRECATED! USE:** ```document.addEventListener('DOMContentLoaded', evtHandler)```)
+
+**The server POST and GET functions automatically get the plugin name before it in the URL.** For example, the URL for a plugin, named *MyPlugin*, with a GET request specified as *home*, is *http://localhost:8000/MyPlugin/home*.
