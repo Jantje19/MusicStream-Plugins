@@ -11,7 +11,7 @@ This repository had the documentation for creating your own *MusicStream* plugin
 2. Extract the .zip file
 3. Look for the directory containing the desired plugin
 4. Move/copy the whole folder in the *MusicStream/Plugins/* directory (If the directory doesn't exist, you have to create it)
-5. (re)Start *MusicStream*
+5. (Re)start *MusicStream*
 
 ## Create your own plugin
 Take a look at the [example](https://github.com/Jantje19/MusicStream-Plugins/tree/master/Example).
