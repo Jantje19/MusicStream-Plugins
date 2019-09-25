@@ -1,1 +1,0 @@
-A *MusicStream* plugin for listening to YouTube videos on your phone with the screen turned off.
