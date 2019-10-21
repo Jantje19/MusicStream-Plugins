@@ -6,7 +6,12 @@ This repository had the documentation for creating your own *MusicStream* plugin
 ## Install a plugin
 **Before installing any plugin you need to take a look at the source code and determine if it is safe to execute!**
 
-#### Install a plugin from this repository
+#### Install a plugin
+##### Automatic installation
+If you are running [MusicStream version v0.2.6](https://github.com/Jantje19/MusicStream/releases/tag/v0.2.6) and above, you can install plugins by running `node plugins.js install [PLUGIN URL]` in a CLI in the *MusicStream* directory, where you should replace `[PLUGIN URL]` with the github repository link.\
+If you are installing plugins from this repository you would run: `node plugins.js plugin https://github.com/jantje19/MusicStream-Plugins`.
+
+##### Manual installation (from this repository)
 1. Download this repository
 2. Extract the .zip file
 3. Look for the directory containing the desired plugin
@@ -53,3 +58,17 @@ A *MusicStream* plugin can export a function since v0.2.3.
 The function gets two arguments: *data* & *imports*. These are same as the arguments passed to the *server* function listed above.
 
 **The server POST and GET functions automatically get the plugin name before it in the URL.** For example, the URL for a plugin, named *MyPlugin*, with a GET request specified as *home*, is *http://localhost:8000/MyPlugin/home*.
+
+#### Config file
+If you want to write multiple plugins, but not overclutter your GitHub account, you can create one repository with a `msplugins.config.json` file. It is a json file containing the names and paths of the different plugins.\
+For this repository it looks like this:
+```JSON
+{
+	"Cast": "MyPlugins/Cast/",
+	"Organize": "MyPlugins/Organize/",
+	"SignIn": {
+		"path": "MyPlugins/SignIn/",
+		"npm-install": true
+	}
+}
+```
