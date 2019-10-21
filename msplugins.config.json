@@ -1,0 +1,8 @@
+{
+	"Cast": "MyPlugins/Cast/",
+	"Organize": "MyPlugins/Organize/",
+	"SignIn": {
+		"path": "MyPlugins/SignIn/",
+		"npm-install": true
+	}
+}
