@@ -9,7 +9,7 @@ This repository had the documentation for creating your own *MusicStream* plugin
 #### Install a plugin
 ##### Automatic installation
 If you are running [MusicStream version v0.2.6](https://github.com/Jantje19/MusicStream/releases/tag/v0.2.6) and above, you can install plugins by running `node plugins.js install [PLUGIN URL]` in a CLI in the *MusicStream* directory, where you should replace `[PLUGIN URL]` with the github repository link.\
-If you are installing plugins from this repository you would run: `node plugins.js plugin https://github.com/jantje19/MusicStream-Plugins`.
+If you are installing plugins from this repository you would run: `node plugins.js install https://github.com/jantje19/MusicStream-Plugins`.
 
 ##### Manual installation (from this repository)
 1. Download this repository
